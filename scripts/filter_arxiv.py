@@ -15,7 +15,7 @@ with open(src) as f, open(out, 'w') as g:
             continue
 
         # date looks like "Mon, 1 Jan 2020 00:00:00 GMT"
-        year = int(p['versions'][0]['created'].split()[-2])
+        year = int(p['versions'][0]['created'].split()[-3])
         if not (2010 <= year <= 2020):
             continue
 
