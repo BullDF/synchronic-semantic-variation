@@ -1,9 +1,10 @@
 import json
-from pathlib import Path
+import os
 
-src = Path('../data/raw/arxiv-metadata-oai-snapshot.json')
-out = Path('../data/processed/arxiv_cs_2010_2020.jsonl')
-out.parent.mkdir(parents=True, exist_ok=True)
+data_dir = '../data'
+src = f'{data_dir}/raw/arxiv-metadata-oai-snapshot.json'
+out = f'{data_dir}/processed/arxiv_cs_2010_2020.jsonl'
+os.makedirs(f'{data_dir}/processed', exist_ok=True)
 
 kept = 0
 with open(src) as f, open(out, 'w') as g:
