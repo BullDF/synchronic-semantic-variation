@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-src = Path('data/raw/arxiv-metadata-oai-snapshot.json')
-out = Path('data/processed/arxiv_cs_2010_2020.jsonl')
+src = Path('../data/raw/arxiv-metadata-oai-snapshot.json')
+out = Path('../data/processed/arxiv_cs_2010_2020.jsonl')
 out.parent.mkdir(parents=True, exist_ok=True)
 
 kept = 0
