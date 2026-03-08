@@ -29,4 +29,4 @@ with open(src) as f, open(out, "w") as g:
         if i % 100000 == 0:
             print(f"{i} processed, {kept} kept")
 
-print(f"done, kept {kept}")
+print(f"Done, kept {kept}")
