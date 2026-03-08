@@ -11,7 +11,7 @@ with open(src) as f, open(out, 'w') as g:
     for i, line in enumerate(f):
         p = json.loads(line)
 
-        if 'cs.' not in p.get('categories', ''):
+        if not any(c.startswith('cs.') for c in p.get('categories', '').split()):
             continue
 
         # date looks like "Mon, 1 Jan 2020 00:00:00 GMT"
