@@ -2,7 +2,7 @@ import json
 import os
 
 data_dir = '../data'
-src = f'{data_dir}/raw/yelp_dataset/yelp_academic_dataset_review.json'
+src = f'{data_dir}/raw/yelp_academic_dataset_review.json'
 out = f'{data_dir}/processed/yelp_reviews_2010_2020.jsonl'
 os.makedirs(f'{data_dir}/processed', exist_ok=True)
 
