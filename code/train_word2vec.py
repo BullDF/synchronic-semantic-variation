@@ -43,6 +43,6 @@ model = Word2Vec(
     seed=42,
 )
 
-out_path = f'{out_dir}/{args.corpus}-model'
+out_path = f'{out_dir}/{args.corpus}.model'
 model.save(out_path)
 print(f'Saved to {out_path} (vocab size: {len(model.wv)})')
