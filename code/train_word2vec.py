@@ -40,7 +40,7 @@ model = Word2Vec(
     min_count=5,
     workers=4,
     epochs=5,
-    seed=42,
+    seed=2611,
 )
 
 out_path = f'{out_dir}/{args.corpus}.model'
