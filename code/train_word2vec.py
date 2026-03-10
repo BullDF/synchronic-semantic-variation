@@ -36,8 +36,11 @@ print(f'Loaded {len(sentences)} documents')
 model = Word2Vec(
     sentences,
     vector_size=300,
-    window=5,
+    window=4,
     min_count=5,
+    sample=1e-5,
+    negative=5,
+    ns_exponent=0.75,
     workers=4,
     epochs=5,
     seed=2611,
