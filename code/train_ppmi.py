@@ -18,7 +18,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('corpus', choices=corpora.keys())
 parser.add_argument('--window', type=int, default=4)
 parser.add_argument('--min_count', type=int, default=5)
-parser.add_argument('--alpha', type=float, default=0.75)
+parser.add_argument('--cds', type=float, default=0.75)   # context distribution smoothing exponent
+parser.add_argument('--alpha', type=float, default=1.6094)  # negative prior log(5), shifted PPMI
 args = parser.parse_args()
 
 path, field = corpora[args.corpus]
@@ -72,7 +73,7 @@ total = counts.sum()
 row_sums = np.array(counts.sum(axis=1)).flatten()
 col_sums = np.array(counts.sum(axis=0)).flatten()
 
-col_sums_smooth = col_sums ** args.alpha
+col_sums_smooth = col_sums ** args.cds
 col_sums_smooth /= col_sums_smooth.sum()
 
 coo = counts.tocoo()
@@ -80,7 +81,7 @@ p_wc = coo.data / total
 p_w = row_sums[coo.row] / total
 p_c = col_sums_smooth[coo.col]
 
-ppmi_vals = np.log(p_wc / (p_w * p_c))
+ppmi_vals = np.log(p_wc / (p_w * p_c)) - args.alpha
 ppmi_vals = np.maximum(ppmi_vals, 0)
 
 ppmi = csr_matrix((ppmi_vals, (coo.row, coo.col)), shape=(V, V))
