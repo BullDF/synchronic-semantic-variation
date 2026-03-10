@@ -17,7 +17,7 @@ parser.add_argument('corpus', choices=corpora.keys())
 args = parser.parse_args()
 
 path, field = corpora[args.corpus]
-out_dir = f'{data_dir}/embeddings/word2vec'
+out_dir = '../embeddings/word2vec'
 os.makedirs(out_dir, exist_ok=True)
 
 def tokenize(text):

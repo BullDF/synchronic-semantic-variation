@@ -22,7 +22,7 @@ parser.add_argument('--alpha', type=float, default=0.75)
 args = parser.parse_args()
 
 path, field = corpora[args.corpus]
-out_dir = f'{data_dir}/embeddings/ppmi'
+out_dir = '../embeddings/ppmi'
 os.makedirs(out_dir, exist_ok=True)
 
 def tokenize(text):
