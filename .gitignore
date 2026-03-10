@@ -209,5 +209,8 @@ __marimo__/
 # Data
 data/
 
+# Embeddings
+embeddings/
+
 # macOS
 .DS_Store
