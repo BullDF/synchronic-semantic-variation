@@ -1,4 +1,4 @@
-# synchronic-semantic-variation
+# Synchronic Semantic Variation
 
 CSC2611 project (University of Toronto, Winter 2026).
 
