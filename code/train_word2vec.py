@@ -23,6 +23,7 @@ os.makedirs(out_dir, exist_ok=True)
 def tokenize(text):
     return re.findall(r"[a-z]+(?:'[a-z]+)*", text.lower())
 
+print(f'Corpus: {args.corpus}')
 print(f'Loading {args.corpus}...')
 sentences = []
 with open(path) as f:

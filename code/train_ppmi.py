@@ -22,6 +22,7 @@ parser.add_argument('--cds', type=float, default=0.75)   # context distribution 
 parser.add_argument('--alpha', type=float, default=1.6094)  # negative prior log(5), shifted PPMI
 args = parser.parse_args()
 
+print(f'Corpus: {args.corpus}')
 path, field = corpora[args.corpus]
 out_dir = '../embeddings/ppmi'
 os.makedirs(out_dir, exist_ok=True)
