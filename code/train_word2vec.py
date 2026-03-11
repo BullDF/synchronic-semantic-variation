@@ -14,6 +14,7 @@ corpora = {
 
 parser = argparse.ArgumentParser()
 parser.add_argument('corpus', choices=corpora.keys())
+parser.add_argument('--sample', type=float, default=1e-5)
 args = parser.parse_args()
 
 path, field = corpora[args.corpus]
@@ -39,7 +40,7 @@ model = Word2Vec(
     vector_size=300,
     window=4,
     min_count=5,
-    sample=1e-5,
+    sample=args.sample,
     negative=5,
     ns_exponent=0.75,
     workers=4,
