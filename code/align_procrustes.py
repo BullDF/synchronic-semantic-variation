@@ -6,7 +6,7 @@ from gensim.models import Word2Vec
 
 emb_dir = '../embeddings'
 
-corpora = ['arxiv', 'yelp', 'ciao']
+corpora = ['arxiv', 'yelp', 'ciao', 'reddit']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('method', choices=['word2vec', 'svd'])
