@@ -1,10 +1,9 @@
-import os
 import numpy as np
 from scipy.stats import spearmanr
 
 results_dir = '../results'
 
-pairs = [('arxiv', 'yelp'), ('arxiv', 'ciao'), ('yelp', 'ciao')]
+pairs = [('arxiv', 'yelp'), ('arxiv', 'ciao'), ('arxiv', 'reddit'), ('yelp', 'ciao'), ('yelp', 'reddit'), ('ciao', 'reddit')]
 methods = ['word2vec', 'ppmi', 'svd']
 
 def load_rankings(method, src, tgt):

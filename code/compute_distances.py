@@ -6,7 +6,7 @@ emb_dir = '../embeddings'
 out_dir = '../results'
 os.makedirs(out_dir, exist_ok=True)
 
-pairs = [('arxiv', 'yelp'), ('arxiv', 'ciao'), ('yelp', 'ciao')]
+pairs = [('arxiv', 'yelp'), ('arxiv', 'ciao'), ('arxiv', 'reddit'), ('yelp', 'ciao'), ('yelp', 'reddit'), ('ciao', 'reddit')]
 
 def load_npy_vocab(path):
     vecs = np.load(f'{path}.npy')
