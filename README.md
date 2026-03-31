@@ -10,9 +10,10 @@ We train word embeddings (word2vec, PPMI, SVD) separately per corpus, align them
 
 1. Filter corpora to 2010–2011 window
 2. Train embeddings per corpus — `code/train_word2vec.py`, `train_ppmi.py`, `train_svd.py`
-3. Align with Procrustes (word2vec, SVD); PPMI is naturally aligned
+3. Align with Procrustes (word2vec, SVD); PPMI shares a fixed context vocabulary, no alignment needed
 4. Compute cosine distances per word across aligned embeddings
 5. Rank by semantic variation; evaluate with Spearman correlation across methods
+6. Qualitative analysis via ConShift anchor words
 
 ## Setup
 
@@ -43,6 +44,14 @@ embeddings/
 results/
 ```
 
+| Corpus    | Domain            | Documents (2010–2011) |
+|-----------|-------------------|-----------------------|
+| arXiv CS  | Academic (CS)     | 16,711                |
+| Yelp      | Restaurant reviews| 369,400               |
+| Ciao      | Product reviews   | 48,018                |
+| Reddit    | Online communities| ~16M                  |
+
+Text field: `abstract` for arXiv, `text` for Yelp/Ciao. Reddit handled separately (see `code/filter_reddit.py`).
 
 ## Training Embeddings
 
@@ -66,13 +75,13 @@ python3 train_svd.py arxiv
 
 ## Alignment
 
-Procrustes alignment for word2vec and SVD (PPMI vectors share the same space, no alignment needed):
+Procrustes alignment for word2vec and SVD (PPMI not needed):
 
 ```bash
 bash align_procrustes_all.sh
 ```
 
-This aligns all three corpus pairs (arxiv↔yelp, arxiv↔ciao, yelp↔ciao) for both methods. Output in `embeddings/word2vec_aligned/` and `embeddings/svd_aligned/`:
+This aligns all 6 pairs across the 4 corpora (arxiv, yelp, ciao, reddit) for both methods. Output in `embeddings/word2vec_aligned/` and `embeddings/svd_aligned/`:
 - `{source}_to_{target}.npy` + `.vocab` — aligned source vectors (L2-normalized)
 - `{target}_normalized.npy` + `.vocab` — normalized target vectors
 
@@ -89,3 +98,18 @@ Compute Spearman correlation between method rankings:
 ```bash
 python3 spearman_correlation.py
 ```
+
+PPMI vs SVD: r=0.44–0.61 across all pairs (consistent, since SVD is derived from PPMI).  
+word2vec vs count-based: varies by domain distance — r≈0.29–0.50 for similar domains (arXiv–Reddit), near zero or negative for distant ones.
+
+**Note on PPMI:** PPMI cosine distances collapse to ~1.0 for distant domain pairs (e.g. arXiv–Yelp). This is a known limitation: non-zero PPMI dimensions are nearly disjoint across corpora, making cosine similarity ~0 uniformly. PPMI is not usable for cross-domain ranking; use SVD and word2vec only for qualitative analysis.
+
+## Qualitative Analysis (ConShift)
+
+We use an iterative ConShift-style Procrustes alignment to find stable anchor words and words with high semantic variation:
+
+```bash
+python3 anchors_word2vec_conshift.py
+```
+
+See `notebooks/anchors_word2vec_results.ipynb` for visualization of top-N shifted/stable words per corpus pair. Best pairs for interpretation: **arXiv–Yelp** and **arXiv–Reddit**.
