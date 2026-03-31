@@ -33,7 +33,6 @@ os.makedirs(out_dir, exist_ok=True)
 def tokenize(text):
     return re.findall(r"[a-z]+(?:'[a-z]+)*", text.lower())
 
-# First pass: build vocabulary
 print('Building vocabulary...')
 word_counts = Counter()
 with open(path) as f:
@@ -46,7 +45,6 @@ w2i = {w: i for i, w in enumerate(vocab)}
 V = len(vocab)
 print(f'Vocab size: {V}')
 
-# Second pass: count co-occurrences
 print('Counting co-occurrences...')
 cooc = Counter()
 with open(path) as f:
@@ -97,7 +95,6 @@ s = s[idx]
 
 embeddings = U * (s ** args.gamma)
 
-# Save
 out_prefix = f'{out_dir}/{args.corpus}'
 np.save(f'{out_prefix}.npy', embeddings)
 with open(f'{out_prefix}.vocab', 'w') as f:

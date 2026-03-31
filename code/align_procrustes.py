@@ -54,7 +54,6 @@ B = B / np.linalg.norm(B, axis=1, keepdims=True)
 print('Running Procrustes...')
 W, _ = orthogonal_procrustes(A, B)
 
-# Apply rotation to full source embedding matrix
 src_vecs_norm = src_vecs / np.linalg.norm(src_vecs, axis=1, keepdims=True)
 src_aligned = src_vecs_norm @ W
 
@@ -67,7 +66,6 @@ with open(f'{prefix}.vocab', 'w') as f:
 print(f'Saved {prefix}.npy (shape {src_aligned.shape}) and {prefix}.vocab')
 print(f'Target vocab saved as reference: {len(tgt_vocab)} words')
 
-# Also save normalized target for convenience
 tgt_vecs_norm = tgt_vecs / np.linalg.norm(tgt_vecs, axis=1, keepdims=True)
 tgt_prefix = f'{out_dir}/{args.target}_normalized'
 np.save(f'{tgt_prefix}.npy', tgt_vecs_norm)

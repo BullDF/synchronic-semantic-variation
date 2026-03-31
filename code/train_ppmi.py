@@ -30,7 +30,6 @@ os.makedirs(out_dir, exist_ok=True)
 def tokenize(text):
     return re.findall(r"[a-z]+(?:'[a-z]+)*", text.lower())
 
-# First pass: build vocabulary
 print('Building vocabulary...')
 word_counts = Counter()
 with open(path) as f:
@@ -43,7 +42,6 @@ w2i = {w: i for i, w in enumerate(vocab)}
 V = len(vocab)
 print(f'Vocab size: {V}')
 
-# Second pass: count co-occurrences
 print('Counting co-occurrences...')
 cooc = Counter()
 with open(path) as f:
@@ -60,7 +58,6 @@ with open(path) as f:
 
 print(f'Unique (w, c) pairs: {len(cooc)}')
 
-# Build sparse counts matrix
 rows = np.array([k[0] for k in cooc], dtype=np.int32)
 cols = np.array([k[1] for k in cooc], dtype=np.int32)
 data = np.array(list(cooc.values()), dtype=np.float32)
@@ -68,7 +65,6 @@ del cooc
 
 counts = csr_matrix((data, (rows, cols)), shape=(V, V))
 
-# Compute PPMI with context distribution smoothing
 print('Computing PPMI...')
 total = counts.sum()
 row_sums = np.array(counts.sum(axis=1)).flatten()
@@ -88,7 +84,6 @@ ppmi_vals = np.maximum(ppmi_vals, 0)
 ppmi = csr_matrix((ppmi_vals, (coo.row, coo.col)), shape=(V, V))
 ppmi.eliminate_zeros()
 
-# Save
 out_prefix = f'{out_dir}/{args.corpus}'
 save_npz(f'{out_prefix}.npz', ppmi)
 with open(f'{out_prefix}.vocab', 'w') as f:

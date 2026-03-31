@@ -1,11 +1,10 @@
 import os
+import json
 
 data_dir = '../data'
 src = f'{data_dir}/raw/Ciao/dataset/rating.txt'
 out = f'{data_dir}/processed/ciao_reviews_2010_2020.jsonl'
 os.makedirs(f'{data_dir}/processed', exist_ok=True)
-
-import json
 
 kept = 0
 with open(src, encoding='utf-8', errors='ignore') as f, open(out, 'w') as g:

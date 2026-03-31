@@ -52,11 +52,8 @@ for src, tgt in pairs:
     tgt_w2i = {w: i for i, w in enumerate(tgt_vocab)}
     common = sorted(set(src_vocab) & set(tgt_vocab))
 
-    # Find shared context columns
     all_src_ctx = set(range(src_m.shape[1]))
     all_tgt_ctx = set(range(tgt_m.shape[1]))
-    # Each corpus has its own vocab as context — need shared word index
-    # Use shared vocab as context dimension
     shared_ctx = sorted(set(src_vocab) & set(tgt_vocab))
     src_ctx_idx = [src_w2i[w] for w in shared_ctx]
     tgt_ctx_idx = [tgt_w2i[w] for w in shared_ctx]
