@@ -221,3 +221,6 @@ reddit_filtered/*
 processed/*
 .vscode/*
 *.synctex.gz
+*.bbl
+*.nav
+*.snm
