@@ -220,3 +220,4 @@ results/
 reddit_filtered/*
 processed/*
 .vscode/*
+*.synctex.gz

@@ -1,0 +1,48 @@
+\begin{thebibliography}{1}
+
+\bibitem{azarbonyad2017words}
+Hosein Azarbonyad, Mostafa Dehghani, Kaspar Beelen, Alexandra Arkut, Maarten Marx, and Jaap Kamps.
+\newblock Words are malleable: Computing semantic shifts in political and media discourse.
+\newblock In {\em Proceedings of the 2017 ACM on Conference on Information and Knowledge Management}, pages 1509--1518, 2017.
+
+\bibitem{cook2010automatically}
+Paul Cook and Suzanne Stevenson.
+\newblock Automatically identifying changes in the semantic orientation of words.
+\newblock In {\em LREC}, 2010.
+
+\bibitem{del2017semantic}
+Marco Del~Tredici and Raquel Fern{\'a}ndez.
+\newblock Semantic variation in online communities of practice.
+\newblock In {\em Proceedings of the 12th International Conference on Computational Semantics (IWCS)—Long papers}, 2017.
+
+\bibitem{hamilton2016inducing}
+William~L Hamilton, Kevin Clark, Jure Leskovec, and Dan Jurafsky.
+\newblock Inducing domain-specific sentiment lexicons from unlabeled corpora.
+\newblock In {\em Proceedings of the conference on empirical methods in natural language processing. conference on empirical methods in natural language processing}, volume 2016, page 595, 2016.
+
+\bibitem{hamilton2016diachronic}
+William~L Hamilton, Jure Leskovec, and Dan Jurafsky.
+\newblock Diachronic word embeddings reveal statistical laws of semantic change.
+\newblock {\em arXiv preprint arXiv:1605.09096}, 2016.
+
+\bibitem{hofmann2021dcwe}
+Valentin Hofmann, Janet Pierrehumbert, and Hinrich Sch{\"u}tze.
+\newblock Dynamic contextualized word embeddings.
+\newblock In {\em Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics}, 2021.
+
+\bibitem{jackson2019emotion}
+Joshua~Conrad Jackson, Joseph Watts, Teague~R Henry, Johann-Mattis List, Robert Forkel, Peter~J Mucha, Simon~J Greenhill, Russell~D Gray, and Kristen~A Lindquist.
+\newblock Emotion semantics show both cultural variation and universal structure.
+\newblock {\em Science}, 366(6472):1517--1522, 2019.
+
+\bibitem{khudabukhsh2021we}
+Ashiqur~R KhudaBukhsh, Rupak Sarkar, Mark~S Kamlet, and Tom Mitchell.
+\newblock We don't speak the same language: Interpreting polarization through machine translation.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial Intelligence}, volume~35, pages 14893--14901, 2021.
+
+\bibitem{noble2021semantic}
+Bill Noble, Asad Sayeed, Raquel Fern{\'a}ndez, and Staffan Larsson.
+\newblock Semantic shift in social networks.
+\newblock In {\em Proceedings of* SEM 2021: The Tenth Joint Conference on Lexical and Computational Semantics}, pages 26--37, 2021.
+
+\end{thebibliography}

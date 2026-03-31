@@ -1,0 +1,67 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{enumitem}
+
+\title{
+{Synchronic Semantic Variation Across Groups}\\[0.2em]
+\large \textit{Project Proposal} \\[-1em]
+}
+
+\author{
+\IEEEauthorblockN{Johnny Meng, Yimo Ning}
+\IEEEauthorblockA{
+\texttt{\{johnnymeng, yimoning\}@cs.toronto.edu}
+}
+}
+
+\begin{document}
+\setlength{\parindent}{0pt}
+\maketitle
+
+\section{Introduction}
+
+Recent work has shown that substantial semantic differences can arise synchronically across social groups and discourse contexts, even when time is held constant, as words are framed and interpreted differently in political and media discourse~\cite{azarbonyad2017words}, across polarized ideological communities~\cite{khudabukhsh2021we}, and within online communities of practice~\cite{del2017semantic}.
+
+In this project, we adapt computational methods originally developed for detecting time-varying semantic change to a synchronic setting, where time is fixed and semantic variation is measured across groups such as different age groups, posts from different social medias. Specifically, we replace chunk-by-time setting into diachronic settings with group-conditioned corpora and apply multiple semantic change detection techniques to quantify cross-group semantic variation. By systematically comparing these methods, we aim to compare across different approaches, determine which are more generalized, and able to capture and characterize synchronic semantic variation across social groups.
+
+\section{Related Work}
+
+Most computational work on semantic change has focused on diachronic settings where word meanings are compared across different time period where they assume time is the axis for the semantic change. Many past studies used distributional and embedding-based representations to quantify semantic change over time, they revealed empirical regularities such as the relationship between frequency, polysemy, and rates of semantic change~\cite{hamilton2016diachronic}. 
+
+Beside from just looking at time, various studies emphasize how social and cultural structures help shape what words mean. Semantic variation has been shown to correlate with social network organization, where differences in community structure give rise to distinct semantic usage patterns~\cite{noble2021semantic}. For example, the word \textit{transformer} has completely different meanings in films compared to a computer science context. At a broader scale, cross-cultural studies demonstrate that word meanings, particularly in domains such as emotion, exhibit systematic variation across cultures while retaining shared semantic structure, suggesting that semantic representations are jointly shaped by universal and group-specific factors~\cite{jackson2019emotion}.
+
+Other work has examined semantic change along specific dimensions, such as sentiment and semantic orientation. Methods based on positive pointwise mutual information (PPMI) and distributional association have been proposed to detect changes in word polarity over time~\cite{cook2010automatically}, as well as to induce domain-specific sentiment lexicons from unlabeled corpora~\cite{hamilton2016inducing}. Although these studies operate primarily in diachronic or domain-shift settings, they provide interpretable techniques for measuring structured semantic variation.
+
+Together, existing work suggests that semantic variation can arise not only over time, but also across social groups, domains, and cultural contexts. Our work builds on these insights by systematically adapting and comparing diachronic semantic change detection methods in a synchronic group-based setting.
+
+\section{Data \& Methodology}
+
+In the study by Hofmann et al., the researchers extended BERT's contextualized embeddings by incorporating the time and social space dimensions, rendering word embeddings \textit{dynamic}. To achieve this, the authors trained models using text datasets that are of different social contexts and time frames, such as arXiv, Yelp, Reddit, and Ciao. These datasets are publicly available online, making them suitable for the current study~\cite{hofmann2021dcwe}. Considering the large sizes of these datasets, we might optionally select only a random sample of texts from each dataset depending on the available computational resources.
+
+Given the datasets, we propose the following methodology:
+
+\begin{enumerate}
+    \item Given datasets of different social contexts mentioned above, fix a specific time frame for analysis (e.g., 2019-2020).
+    \item Train word embeddings using \texttt{word2vec}, PPMI, and SVD in each social context separately, align embeddings across groups using Procrustes transformation, as suggested in~\cite{hamilton2016diachronic}.
+    \item For each word in the vocabulary, compute distance metrics (e.g., cosine distance, Euclidean distance) between word embeddings of different contexts. Larger distances signify greater semantic variations.
+    \item Rank words by semantic variations. A word is higher in the rank if there is a greater semantic variation between contexts.
+    \item Compute Spearman correlation between ranks of different embedding methods. A positive correlation signifies robust differences in the meanings of words.
+    \item Manually select words with known different meanings across contexts, verify that the mechanism successfully detects them. We measure success by correlation agreement, precision with ground-truth words that underwent semantic variation, and qualitative analysis of top-ranked words.
+    \item Attempt to interpret the results by finding common features in synchronic semantic variation.
+\end{enumerate}
+
+With the above procedure, we hypothesize that different methods will detect similar patterns of semantic variation, indicated by a moderate-to-strong Spearman correlation. This result suggests that words have evidently different meanings in different groups that are detectable irrespective of the methods.
+
+In terms of feasibility, all three methods described in step 2 of the procedure are computationally cheap and simple to train from scratch. More complex embeddings, such as those generated by LLMs, would be too computationally expensive and thus are not adopted for this study.
+
+We hope that this work can shed some light on synchronic semantic variation under different social contexts, a subfield underexplored in semantic change, by leveraging known effective methods for diachronic semantic change.
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
+
+\end{document}
