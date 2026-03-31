@@ -8,11 +8,11 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import svds
 from tqdm import tqdm
 
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_default_csv_dir = os.path.normpath(os.path.join(_script_dir, '..', 'reddit_filtered'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_csv_dir = os.path.normpath(os.path.join(script_dir, '..', 'reddit_filtered'))
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input-dir', default=_default_csv_dir, help='Directory of CSVs (id, time, content)')
+parser.add_argument('--input-dir', default=default_csv_dir)
 parser.add_argument('--window', type=int, default=4)
 parser.add_argument('--min_count', type=int, default=5)
 parser.add_argument('--cds', type=float, default=0.75)
@@ -21,7 +21,7 @@ parser.add_argument('--gamma', type=float, default=0.5)
 parser.add_argument('--alpha', type=float, default=0.0)  # negative prior; 0 for SVD per paper
 args = parser.parse_args()
 
-out_dir = os.path.normpath(os.path.join(_script_dir, '..', 'embeddings', 'svd'))
+out_dir = os.path.normpath(os.path.join(script_dir, '..', 'embeddings', 'svd'))
 os.makedirs(out_dir, exist_ok=True)
 
 def tokenize(text):
@@ -47,7 +47,6 @@ def iter_texts_from_csv_dir(csv_dir_path):
                 if len(row) >= 3 and row[2].strip():
                     yield row[2].strip()
 
-# First pass: build vocabulary
 print('Building vocabulary...')
 word_counts = Counter()
 for text in tqdm(iter_texts_from_csv_dir(args.input_dir), desc="Vocabulary", unit=" doc"):
@@ -58,7 +57,6 @@ w2i = {w: i for i, w in enumerate(vocab)}
 V = len(vocab)
 print(f'Vocab size: {V}')
 
-# Second pass: count co-occurrences
 print('Counting co-occurrences...')
 cooc = Counter()
 for text in tqdm(iter_texts_from_csv_dir(args.input_dir), desc="Co-occurrences", unit=" doc"):
@@ -105,7 +103,6 @@ s = s[idx]
 
 embeddings = U * (s ** args.gamma)
 
-# Save
 out_prefix = f'{out_dir}/reddit'
 np.save(f'{out_prefix}.npy', embeddings)
 with open(f'{out_prefix}.vocab', 'w') as f:

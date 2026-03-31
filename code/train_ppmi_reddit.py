@@ -7,18 +7,18 @@ from collections import Counter
 from scipy.sparse import csr_matrix, save_npz
 from tqdm import tqdm
 
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_default_csv_dir = os.path.normpath(os.path.join(_script_dir, '..', 'reddit_filtered'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_csv_dir = os.path.normpath(os.path.join(script_dir, '..', 'reddit_filtered'))
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input-dir', default=_default_csv_dir, help='Directory of CSVs (id, time, content)')
+parser.add_argument('--input-dir', default=default_csv_dir)
 parser.add_argument('--window', type=int, default=4)
 parser.add_argument('--min_count', type=int, default=5)
 parser.add_argument('--cds', type=float, default=0.75)   # context distribution smoothing exponent
 parser.add_argument('--alpha', type=float, default=1.6094)  # negative prior log(5), shifted PPMI
 args = parser.parse_args()
 
-out_dir = os.path.normpath(os.path.join(_script_dir, '..', 'embeddings', 'ppmi'))
+out_dir = os.path.normpath(os.path.join(script_dir, '..', 'embeddings', 'ppmi'))
 os.makedirs(out_dir, exist_ok=True)
 
 def tokenize(text):
@@ -44,7 +44,6 @@ def iter_texts_from_csv_dir(csv_dir_path):
                 if len(row) >= 3 and row[2].strip():
                     yield row[2].strip()
 
-# First pass: build vocabulary
 print('Building vocabulary...')
 word_counts = Counter()
 for text in tqdm(iter_texts_from_csv_dir(args.input_dir), desc="Vocabulary", unit=" doc"):
@@ -55,7 +54,6 @@ w2i = {w: i for i, w in enumerate(vocab)}
 V = len(vocab)
 print(f'Vocab size: {V}')
 
-# Second pass: count co-occurrences
 print('Counting co-occurrences...')
 cooc = Counter()
 for text in tqdm(iter_texts_from_csv_dir(args.input_dir), desc="Co-occurrences", unit=" doc"):
@@ -68,7 +66,6 @@ for text in tqdm(iter_texts_from_csv_dir(args.input_dir), desc="Co-occurrences",
 
 print(f'Unique (w, c) pairs: {len(cooc)}')
 
-# Build sparse counts matrix
 rows = np.array([k[0] for k in cooc], dtype=np.int32)
 cols = np.array([k[1] for k in cooc], dtype=np.int32)
 data = np.array(list(cooc.values()), dtype=np.float32)
@@ -76,7 +73,6 @@ del cooc
 
 counts = csr_matrix((data, (rows, cols)), shape=(V, V))
 
-# Compute PPMI with context distribution smoothing
 print('Computing PPMI...')
 total = counts.sum()
 row_sums = np.array(counts.sum(axis=1)).flatten()
@@ -96,7 +92,6 @@ ppmi_vals = np.maximum(ppmi_vals, 0)
 ppmi = csr_matrix((ppmi_vals, (coo.row, coo.col)), shape=(V, V))
 ppmi.eliminate_zeros()
 
-# Save
 out_prefix = f'{out_dir}/reddit'
 save_npz(f'{out_prefix}.npz', ppmi)
 with open(f'{out_prefix}.vocab', 'w') as f:

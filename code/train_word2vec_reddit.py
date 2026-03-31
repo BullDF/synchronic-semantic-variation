@@ -5,16 +5,15 @@ import argparse
 from gensim.models import Word2Vec
 from tqdm import tqdm
 
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_default_csv_dir = os.path.normpath(os.path.join(_script_dir, '..', 'reddit_filtered'))
-_default_out_dir = os.path.normpath(os.path.join(_script_dir, '..', 'embeddings', 'word2vec'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_csv_dir = os.path.normpath(os.path.join(script_dir, '..', 'reddit_filtered'))
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input-dir', default=_default_csv_dir, help='Directory of CSVs (id, time, content)')
+parser.add_argument('--input-dir', default=default_csv_dir)
 parser.add_argument('--sample', type=float, default=1e-5)
 args = parser.parse_args()
 
-out_dir = os.path.normpath(os.path.join(_script_dir, '..', 'embeddings', 'word2vec'))
+out_dir = os.path.normpath(os.path.join(script_dir, '..', 'embeddings', 'word2vec'))
 os.makedirs(out_dir, exist_ok=True)
 
 def tokenize(text):
@@ -41,7 +40,6 @@ def iter_texts_from_csv_dir(csv_dir_path):
                     yield row[2].strip()
 
 class SentenceIterator:
-    """Re-iterable: each pass re-reads CSVs from disk so Word2Vec can do multiple epochs."""
     def __init__(self, csv_dir_path):
         self.csv_dir_path = csv_dir_path
 

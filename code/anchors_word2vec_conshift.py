@@ -1,42 +1,30 @@
-"""
-Iterative Procrustes + shift minimization (ConShift-style) for Word2Vec anchors.
-
-Two corpora: finds words with low cross-corpus cosine distance after alignment.
-Three corpora: runs all three pairs; optional intersection of anchor sets.
-
-Run from repo root:  python code/anchors_word2vec_conshift.py ...
-"""
-from __future__ import annotations
-
 import argparse
 import os
-from typing import Dict, List, Set, Tuple, Optional
 
 import numpy as np
 from gensim.models import Word2Vec
 from scipy.linalg import orthogonal_procrustes
 
 try:
-    from gensim.parsing.preprocessing import STOPWORDS as _GENSIM_STOP
+    from gensim.parsing.preprocessing import STOPWORDS as gensim_stop
 except Exception:
-    _GENSIM_STOP = frozenset()
+    gensim_stop = frozenset()
 
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_emb_dir = os.path.normpath(os.path.join(_script_dir, '..', 'embeddings'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+emb_dir_default = os.path.normpath(os.path.join(script_dir, '..', 'embeddings'))
 
-# Fallback if gensim STOPWORDS unavailable
-_FALLBACK_STOP = frozenset(
+fallback_stop = frozenset(
     'a an the and or but if in on at to for of as by with from into through during '
     'before after above below between under again further then once here there when '
     'where why how all each both few more most other some such no nor not only own '
     'same so than too very can will just don should now'.split()
 )
-STOPWORDS = _GENSIM_STOP | _FALLBACK_STOP
+stopwords = gensim_stop | fallback_stop
 
-CORPORA_DEFAULT = ['arxiv', 'yelp', 'ciao']
+corpora_default = ['arxiv', 'yelp', 'ciao']
 
 
-def load_word2vec_matrix(corpus: str, emb_dir: str):
+def load_word2vec_matrix(corpus, emb_dir):
     path = os.path.join(emb_dir, 'word2vec', f'{corpus}.model')
     m = Word2Vec.load(path)
     vocab = list(m.wv.index_to_key)
@@ -44,34 +32,25 @@ def load_word2vec_matrix(corpus: str, emb_dir: str):
     return m, vocab, vecs
 
 
-def freq_rank(wv) -> Dict[str, int]:
+def freq_rank(wv):
     return {w: i for i, w in enumerate(wv.index_to_key)}
 
 
-def word_count_wv(wv, w: str) -> int:
-    """Training frequency in the Word2Vec vocabulary (0 if unknown)."""
-    if hasattr(wv, "get_vecattr"):
+def word_count_wv(wv, w):
+    if hasattr(wv, 'get_vecattr'):
         try:
-            c = wv.get_vecattr(w, "count")
+            c = wv.get_vecattr(w, 'count')
             if c is not None:
                 return int(c)
         except (KeyError, ValueError, TypeError):
             pass
-    vocab = getattr(wv, "vocab", None)
+    vocab = getattr(wv, 'vocab', None)
     if vocab is not None and w in vocab:
         return int(vocab[w].count)
     return 0
 
 
-def build_shared_words(
-    corpus_a: str,
-    corpus_b: str,
-    emb_dir: str,
-    strip_stopwords: bool,
-    max_rank_a: Optional[int],
-    max_rank_b: Optional[int],
-    min_word_length: int,
-) -> Tuple[List[str], np.ndarray, np.ndarray, List[int], List[int]]:
+def build_shared_words(corpus_a, corpus_b, emb_dir, strip_stopwords, max_rank_a, max_rank_b, min_word_length):
     ma, va, Ea = load_word2vec_matrix(corpus_a, emb_dir)
     mb, vb, Eb = load_word2vec_matrix(corpus_b, emb_dir)
     ra = freq_rank(ma.wv)
@@ -81,10 +60,10 @@ def build_shared_words(
     ib = {w: i for i, w in enumerate(vb)}
     common = set(va) & set(vb)
 
-    def keep(w: str) -> bool:
+    def keep(w):
         if min_word_length > 0 and len(w) < min_word_length:
             return False
-        if strip_stopwords and w in STOPWORDS:
+        if strip_stopwords and w in stopwords:
             return False
         if max_rank_a is not None and ra.get(w, 10**9) >= max_rank_a:
             return False
@@ -106,24 +85,18 @@ def build_shared_words(
     return words, Ea[idx_a], Eb[idx_b], ca, cb
 
 
-def procrustes_from_anchor_indices(
-    Ea_norm: np.ndarray,
-    Eb_norm: np.ndarray,
-    anchor_idx: np.ndarray,
-) -> np.ndarray:
-    """Return W (d,d) minimizing ||Ea_norm[anchor] @ W - Eb_norm[anchor]||."""
+def procrustes_from_anchor_indices(Ea_norm, Eb_norm, anchor_idx):
     A = Ea_norm[anchor_idx]
     B = Eb_norm[anchor_idx]
     W, _ = orthogonal_procrustes(A, B)
     return W
 
 
-def shift_scores(Ea_aligned: np.ndarray, Eb_norm: np.ndarray) -> np.ndarray:
-    """Cosine distance 1 - cos; rows must be L2-normalized."""
+def shift_scores(Ea_aligned, Eb_norm):
     return 1.0 - np.sum(Ea_aligned * Eb_norm, axis=1)
 
 
-def select_anchors(scores: np.ndarray, quantile: float, min_anchors: int, max_anchors: int) -> np.ndarray:
+def select_anchors(scores, quantile, min_anchors, max_anchors):
     n = len(scores)
     k = int(np.ceil(n * quantile))
     k = max(min_anchors, min(k, max_anchors, n))
@@ -131,19 +104,7 @@ def select_anchors(scores: np.ndarray, quantile: float, min_anchors: int, max_an
     return order[:k]
 
 
-def iterative_anchors(
-    Ea: np.ndarray,
-    Eb: np.ndarray,
-    quantile: float,
-    max_iter: int,
-    min_anchors: int,
-    max_anchors: int,
-    tol: int,
-) -> Tuple[np.ndarray, np.ndarray, int]:
-    """
-    Ea, Eb: (|V|, d) for shared vocabulary only.
-    Returns (final_anchor_indices, shift_scores_for_all_words, iterations_used).
-    """
+def iterative_anchors(Ea, Eb, quantile, max_iter, min_anchors, max_anchors, tol):
     Ea_norm = Ea / np.linalg.norm(Ea, axis=1, keepdims=True)
     Eb_norm = Eb / np.linalg.norm(Eb, axis=1, keepdims=True)
 
@@ -152,7 +113,7 @@ def iterative_anchors(
     max_anchors = min(max_anchors, n)
 
     anchor_idx = np.arange(n, dtype=np.int64)
-    prev_anchor: Optional[Set[int]] = None
+    prev_anchor = None
 
     for it in range(max_iter):
         W = procrustes_from_anchor_indices(Ea_norm, Eb_norm, anchor_idx)
@@ -179,20 +140,7 @@ def iterative_anchors(
     return anchor_idx, scores, max_iter
 
 
-def run_pair(
-    source: str,
-    target: str,
-    emb_dir: str,
-    out_dir: str,
-    strip_stopwords: bool,
-    min_rank_per_corpus: int | None,
-    quantile: float,
-    max_iter: int,
-    min_anchors: int,
-    max_anchors: int,
-    tol: int,
-    min_word_length: int,
-) -> Set[str]:
+def run_pair(source, target, emb_dir, out_dir, strip_stopwords, min_rank_per_corpus, quantile, max_iter, min_anchors, max_anchors, tol, min_word_length):
     mr = min_rank_per_corpus
     words, Ea, Eb, cnt_src, cnt_tgt = build_shared_words(
         source, target, emb_dir, strip_stopwords, mr, mr, min_word_length
@@ -237,73 +185,22 @@ def run_pair(
     return anchor_words
 
 
-def main() -> None:
-    p = argparse.ArgumentParser(description='ConShift-style Word2Vec anchor words')
-    p.add_argument(
-        '--mode',
-        choices=['pair', 'all-pairs', 'triple-intersection'],
-        default='all-pairs',
-        help='pair: one source/target; all-pairs: three corpora pairwise; '
-        'triple-intersection: anchors common to all three pairs',
-    )
-    p.add_argument('--source', choices=CORPORA_DEFAULT, help='Used when mode=pair')
-    p.add_argument('--target', choices=CORPORA_DEFAULT, help='Used when mode=pair')
-    p.add_argument(
-        '--corpora',
-        nargs='+',
-        default=CORPORA_DEFAULT,
-        help='Corpora for all-pairs / triple-intersection (default: arxiv yelp ciao)',
-    )
-    p.add_argument(
-        '--emb-dir',
-        default=_emb_dir,
-        help='Directory containing word2vec/ subfolder',
-    )
-    p.add_argument(
-        '--out-dir',
-        default=os.path.normpath(os.path.join(_script_dir, '..', 'results', 'anchors_word2vec')),
-        help='Where to write TSV/TXT outputs',
-    )
-    p.add_argument(
-        '--anchor-quantile',
-        type=float,
-        default=0.15,
-        help='Fraction of shared vocab with lowest shift to treat as anchors each iteration',
-    )
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--mode', choices=['pair', 'all-pairs', 'triple-intersection'], default='all-pairs')
+    p.add_argument('--source', choices=corpora_default)
+    p.add_argument('--target', choices=corpora_default)
+    p.add_argument('--corpora', nargs='+', default=corpora_default)
+    p.add_argument('--emb-dir', default=emb_dir_default)
+    p.add_argument('--out-dir', default=os.path.normpath(os.path.join(script_dir, '..', 'results', 'anchors_word2vec')))
+    p.add_argument('--anchor-quantile', type=float, default=0.15)
     p.add_argument('--max-iter', type=int, default=30)
-    p.add_argument(
-        '--min-anchors',
-        type=int,
-        default=200,
-        help='Floor on anchor count (after quantile)',
-    )
-    p.add_argument(
-        '--max-anchors',
-        type=int,
-        default=50_000,
-        help='Ceiling on anchor count',
-    )
-    p.add_argument(
-        '--convergence-tol',
-        type=int,
-        default=0,
-        help='Stop if symmetric diff of anchor sets between iterations <= this (0 = exact match)',
-    )
-    p.add_argument('--no-stopwords', action='store_true', help='Do not strip stopwords')
-    p.add_argument(
-        '--min-rank-per-corpus',
-        type=int,
-        default=None,
-        metavar='K',
-        help='Keep only words in the top-K by frequency in EACH corpus (gensim order)',
-    )
-    p.add_argument(
-        '--min-word-length',
-        type=int,
-        default=4,
-        metavar='N',
-        help='Drop tokens shorter than N characters (0 = no length filter)',
-    )
+    p.add_argument('--min-anchors', type=int, default=200)
+    p.add_argument('--max-anchors', type=int, default=50000)
+    p.add_argument('--convergence-tol', type=int, default=0)
+    p.add_argument('--no-stopwords', action='store_true')
+    p.add_argument('--min-rank-per-corpus', type=int, default=None, metavar='K')
+    p.add_argument('--min-word-length', type=int, default=4, metavar='N')
     args = p.parse_args()
 
     corpora = args.corpora
@@ -317,41 +214,23 @@ def main() -> None:
         if args.source == args.target:
             raise SystemExit('source and target must differ')
         run_pair(
-            args.source,
-            args.target,
-            args.emb_dir,
-            args.out_dir,
-            strip_sw,
-            args.min_rank_per_corpus,
-            args.anchor_quantile,
-            args.max_iter,
-            args.min_anchors,
-            args.max_anchors,
-            args.convergence_tol,
-            args.min_word_length,
+            args.source, args.target, args.emb_dir, args.out_dir, strip_sw,
+            args.min_rank_per_corpus, args.anchor_quantile, args.max_iter,
+            args.min_anchors, args.max_anchors, args.convergence_tol, args.min_word_length,
         )
         return
 
-    pairs: List[Tuple[str, str]] = []
+    pairs = []
     for i, a in enumerate(corpora):
-        for b in corpora[i + 1 :]:
+        for b in corpora[i + 1:]:
             pairs.append((a, b))
 
-    anchor_sets: List[Set[str]] = []
+    anchor_sets = []
     for a, b in pairs:
         s = run_pair(
-            a,
-            b,
-            args.emb_dir,
-            args.out_dir,
-            strip_sw,
-            args.min_rank_per_corpus,
-            args.anchor_quantile,
-            args.max_iter,
-            args.min_anchors,
-            args.max_anchors,
-            args.convergence_tol,
-            args.min_word_length,
+            a, b, args.emb_dir, args.out_dir, strip_sw,
+            args.min_rank_per_corpus, args.anchor_quantile, args.max_iter,
+            args.min_anchors, args.max_anchors, args.convergence_tol, args.min_word_length,
         )
         anchor_sets.append(s)
 

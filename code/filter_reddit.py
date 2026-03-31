@@ -1,27 +1,21 @@
-"""
-Convert 24 monthly Reddit CSVs (id, time, content) into JSONL for the embedding pipeline.
-Streams row-by-row and writes directly to monthly files (low memory, faster).
-"""
 import os
 import csv
 import json
 import time
 import argparse
 
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_default_input = os.path.normpath(os.path.join(_script_dir, '..', 'reddit_filtered'))
-_default_out = os.path.normpath(os.path.join(_script_dir, '..', 'data'))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_input = os.path.normpath(os.path.join(script_dir, '..', 'reddit_filtered'))
+default_out = os.path.normpath(os.path.join(script_dir, '..', 'data'))
 
-parser = argparse.ArgumentParser(description='Convert Reddit CSVs to JSONL (one per month).')
-parser.add_argument('input_dir', nargs='?', default=_default_input,
-                    help='Directory containing CSV files (id, time, content)')
-parser.add_argument('--out-dir', default=_default_out, help='Output directory for JSONL')
+parser = argparse.ArgumentParser()
+parser.add_argument('input_dir', nargs='?', default=default_input)
+parser.add_argument('--out-dir', default=default_out)
 parser.add_argument('--no-header', action='store_true', help='CSV has no header row')
 args = parser.parse_args()
 
 os.makedirs(args.out_dir, exist_ok=True)
 
-# Open one file handle per (year, month); write as we stream (no full CSV in memory)
 open_files = {}
 counts = {}
 
