@@ -1,0 +1,247 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[round]{natbib}
+
+\definecolor{color}{rgb}{0.15294, 0.21176, 0.22475}
+\definecolor{darkred}{rgb}{0.75, 0.0, 0.0}
+\usecolortheme[named=color]{structure}
+
+\title{Synchronic Semantic Variation Across Groups}
+\subtitle{CSC2611 Final Presentation}
+\author{Yimo Ning, Johnny Meng}
+\date{27 March 2026}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\AtBeginSection[]{
+    \begin{frame}{Outline}
+        \tableofcontents[currentsection]
+    \end{frame}
+}
+
+\section{Introduction}
+
+\begin{frame}{Introduction}
+  \begin{itemize}
+    \item Semantic differences arise across groups, even at the same time.
+    \item Word meanings vary across communities and platforms.
+    \item We study synchronic semantic variation.
+    \item Replace time-based analysis with group-conditioned corpora.
+    \item \textbf{Goal:} measure and compare variation using embeddings.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation}
+  \begin{itemize}
+    \item Most prior work focuses on diachronic semantic change, where word meanings are compared across time using embedding-based methods.
+    \item However, semantic variation is also shaped by social and cultural structure, where different communities use the same words differently.
+    \item Example: \textit{transformer} refers to a movie concept vs.\ a machine learning model depending on the domain.
+    \item \textbf{Gap:} Synchronic, group-based variation is underexplored using the same computational framework.
+    \item \textbf{Goal:} Apply and compare multiple methods (word2vec, PPMI, SVD + alignment) to rank words by cross-group variation, find stable anchor words. 
+    \item \textbf{Key idea:} If rankings agree (e.g., Spearman correlation), detected variation is robust; disagreement reveals method sensitivity.
+  \end{itemize}
+\end{frame}
+
+\section{Methodology \& Experiments}
+
+\begin{frame}{Methodology}
+    \begin{enumerate}
+        \item Fix a time frame, collect corpora from multiple social contexts
+        \item Train word embeddings (word2vec, PPMI, SVD) separately per group
+        \item Align embedding spaces across groups using Procrustes transformation
+        \item Compute cosine distance between aligned embeddings for each word
+        \item Compute Spearman correlation between cosine distances produced by different methods
+        \item Qualitative analysis of top-ranked words
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Datasets}
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{llr}
+            \toprule
+            Corpus & Domain & Documents \\
+            \midrule
+            arXiv CS & Academic (CS) & 16,711 \\
+            Yelp     & Restaurant reviews & 369,400 \\
+            Ciao     & Product reviews & 48,018 \\
+            Reddit   & Online communities & 16M \\
+            \bottomrule
+        \end{tabular}
+        \caption{Corpora used for cross-group comparison}
+    \end{table}
+
+    \begin{itemize}
+        \item Time window fixed to 2010--2011 (constrained by Ciao availability)
+        \item 4 corpora \( \Longrightarrow \) 6 cross-group pairs evaluated per method
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Embedding Methods}
+    Three distributional methods, each trained independently per corpus:
+
+    \vspace{0.3cm}
+
+    \begin{columns}
+        \begin{column}{0.3\linewidth}
+            \textbf{word2vec (SGNS)}
+            \begin{itemize}
+                \item Skip-gram with negative sampling
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.3\linewidth}
+            \textbf{PPMI}
+            \begin{itemize}
+                \item Sparse
+                \item High-dimensional
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.3\linewidth}
+            \textbf{SVD}
+            \begin{itemize}
+                \item Dense
+                \item Low-dimensional
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.3cm}
+
+    \begin{columns}
+        \begin{column}{0.6\linewidth}
+            \[ \mathbf{M}^{\text{PPMI}}_{i, j} = \max\!\left(\log \frac{\mathbb{P}(w_i,c_j)}{\mathbb{P}(w_i)\,\mathbb{P}(c_j)} - \alpha,\ 0\right) \]
+        \end{column}
+        \begin{column}{0.3\linewidth}
+            \[ \mathbf{M}^{\text{PPMI}} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^{\top} \]
+            \[ \mathbf{w}_i^{\text{SVD}} = (\mathbf{U} \boldsymbol{\Sigma}^\gamma)_i \]
+        \end{column}
+    \end{columns}
+
+    \vspace{0.3cm}
+
+    \textbf{Alignment:} Procrustes transformation aligns embedding spaces across corpora on shared vocabulary.
+
+    \vspace{0.1cm}
+
+    \textbf{Variation score:} \( d(\vec{w}_A, \vec{w}_B) = 1 - \cos(\vec{w}_A, \vec{w}_B) \), higher means more semantic difference.
+\end{frame}
+
+\section{Results \& Conclusion}
+
+\begin{frame}{Spearman Correlation Between Methods}
+    \begin{table}[h]
+        \centering
+        \begin{tabular}{lrrr}
+            \toprule
+            Pair & w2v vs PPMI & w2v vs SVD & PPMI vs SVD \\
+            \midrule
+            arXiv vs Yelp   & \(-0.07\) & \(-0.02\) & \(0.44\) \\
+            arXiv vs Ciao   & \(-0.03\) & \(0.04\)  & \(0.51\) \\
+            arXiv vs Reddit & \(\mathbf{0.29}\)  & \(\mathbf{0.50}\)  & \(0.50\) \\
+            Yelp vs Ciao    & \(-0.15\) & \(-0.23\) & \(\mathbf{0.61}\) \\
+            Yelp vs Reddit  & \(0.11\)  & \(0.08\)  & \(0.60\) \\
+            Ciao vs Reddit  & \(0.14\)  & \(-0.02\) & \(0.54\) \\
+            \bottomrule
+        \end{tabular}
+        \caption{Spearman \( \rho \) on common vocabulary per pair}
+    \end{table}
+
+    \begin{itemize}
+        \item PPMI vs SVD consistently moderate (\( 0.44 \)--\( 0.61 \))
+        \item word2vec agrees with count-based only for similar domains (arXiv--Reddit)
+        \item \textbf{PPMI limitation:} distances collapse to 1.0 for distant domains
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Anchors via ConShift (Iterative Alignment)}
+  \begin{enumerate}
+    \item \textbf{Goal:} find stable words across two corpora
+    \item Use shared vocabulary between corpora
+    \item Align embeddings (rotate source to match target)
+    \item Compute shift score (cosine difference)
+    \item Select low-shift words as anchors
+    \item \textbf{Iterate:} re-align using anchors → update anchors
+    \item Stop when anchors stabilize
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Stable Anchors vs Example Variation}
+
+\textbf{Stable words (anchors)}
+\begin{itemize}
+    \item \textit{difficult}
+    \item \textit{larger}
+    \item \textit{issues}
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{Example variations}
+\begin{itemize}
+
+    \item \textit{excited  (arXiv vs Reddit)} \hfill \small (domain variation)
+    \begin{itemize}
+        \item arXiv: ``Every Voronoi cell takes four states: resting, excited, refractory...''
+        \item Reddit: ``I'm excited to get into the new decade!''
+    \end{itemize}
+
+    \item \textit{valued  (arXiv vs Yelp)} \hfill \small (abstraction variation)
+    \begin{itemize}
+        \item arXiv: ``...continuous vector-valued function''
+        \item Yelp: ``Customer service is just not valued here''
+    \end{itemize}
+
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \textbf{Summary}
+    \begin{itemize}
+        \item SVD and word2vec both detect cross-group semantic variation; PPMI collapses for distant domains
+        \item Moderate Spearman agreement between SVD and word2vec for similar domains (arXiv--Reddit: \( \rho \approx 0.50 \)); near-zero for distant domains
+        \item Consistent with \citet{hamilton2016diachronic}: SVD and word2vec are complementary, not equivalent; PPMI is the weakest method
+        \item Qualitative analysis confirms interpretable variation (e.g., \textit{excited}, \textit{valued})
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \textbf{Limitations}
+    \begin{itemize}
+        \item No ground-truth evaluation, results are qualitative only
+        \item Methods cannot distinguish \textit{semantic shift} from \textit{polysemy}: corpora are discrete snapshots, so a word with multiple senses used differently across groups is indistinguishable from a word that has genuinely shifted
+        \item PPMI unusable for cross-domain comparison
+    \end{itemize}
+
+    \vspace{0.2cm}
+
+    \textbf{Future work}
+    \begin{itemize}
+        \item Apply to more granular social groups (e.g., subreddits, demographic groups)
+        \item Use contextualized embeddings (e.g., BERT) to better separate polysemy from shift
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{References}
+    \tiny
+    \nocite{*}
+    \bibliographystyle{plainnat}
+    \bibliography{bib}
+\end{frame}
+
+\end{document}
