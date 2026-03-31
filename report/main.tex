@@ -1,0 +1,183 @@
+\documentclass[11pt]{article}
+\usepackage{acl}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{booktabs}
+
+\title{
+{Synchronic Semantic Variation Across Groups}\\[0.2em]
+\large \textit{Project Report} \\[-1em]
+}
+
+\author{
+  Johnny Meng \and Yimo Ning \\
+  \texttt{\{johnnymeng, yimoning\}@cs.toronto.edu}
+}
+
+\begin{document}
+\maketitle
+
+\section*{Abstract}
+
+\section{Introduction}
+
+Recent work has shown that substantial semantic differences can arise synchronically across social groups and discourse contexts, even when time is held constant, as words are framed and interpreted differently in political and media discourse~\cite{azarbonyad2017words}, across polarized ideological communities~\cite{khudabukhsh2021we}, and within online communities of practice~\cite{del2017semantic}.
+
+In this project, we adapt computational methods originally developed for detecting time-varying semantic change to a synchronic setting, where time is fixed and semantic variation is measured across groups such as different age groups, posts from different social medias. Specifically, we replace chunk-by-time setting into diachronic settings with group-conditioned corpora and apply multiple semantic change detection techniques to quantify cross-group semantic variation. By systematically comparing these methods, we aim to compare across different approaches, determine which are more generalized, and able to capture and characterize synchronic semantic variation across social groups.
+
+\section{Related Work}
+
+Most computational work on semantic change has focused on diachronic settings where word meanings are compared across different time period where they assume time is the axis for the semantic change. Many past studies used distributional and embedding-based representations to quantify semantic change over time, they revealed empirical regularities such as the relationship between frequency, polysemy, and rates of semantic change~\cite{hamilton2016diachronic}. 
+
+Beside from just looking at time, various studies emphasize how social and cultural structures help shape what words mean. Semantic variation has been shown to correlate with social network organization, where differences in community structure give rise to distinct semantic usage patterns~\cite{noble2021semantic}. For example, the word \textit{transformer} has completely different meanings in films compared to a computer science context. At a broader scale, cross-cultural studies demonstrate that word meanings, particularly in domains such as emotion, exhibit systematic variation across cultures while retaining shared semantic structure, suggesting that semantic representations are jointly shaped by universal and group-specific factors~\cite{jackson2019emotion}.
+
+Other work has examined semantic change along specific dimensions, such as sentiment and semantic orientation. Methods based on positive pointwise mutual information (PPMI) and distributional association have been proposed to detect changes in word polarity over time~\cite{cook2010automatically}, as well as to induce domain-specific sentiment lexicons from unlabeled corpora~\cite{hamilton2016inducing}. Although these studies operate primarily in diachronic or domain-shift settings, they provide interpretable techniques for measuring structured semantic variation.
+
+Together, existing work suggests that semantic variation can arise not only over time, but also across social groups, domains, and cultural contexts. Our work builds on these insights by systematically adapting and comparing diachronic semantic change detection methods in a synchronic group-based setting.
+
+\section{Methodology}
+
+\subsection{Data}
+
+In the study conducted by \citet{hofmann2021dcwe}, the researchers extended BERT's contextualized embeddings by incorporating the time and social space dimensions, rendering word embeddings \textit{dynamic}. To evaluate the model performance on different social groups, the authors used text datasets from different social contexts. These datasets are publicly available online, making them suitable for the current study. Below is a description of each corpus we used in the project:
+
+\subsubsection{arXiv}
+
+arXiv is currently one of the largest repositories that host scientific research papers in various subjects with a major focus in computer science. A dataset containing the metadata of papers stored on arXiv is publicly available \href{https://www.kaggle.com/datasets/Cornell-University/arxiv}{here} on Kaggle. To keep the dataset focused, we filtered the papers by domains and extracted the abstracts of only papers in computer science (category starting with \texttt{cs.}). By training embedding models on arXiv abstracts, we aimed to capture semantic variation for words specifically used in an academic, scientific setting.
+
+\subsubsection{Yelp}
+
+Yelp is a restaurant review platform where users can post reviews for businesses around the world. A comprehensive dataset containing reviews, photos, check-in information, and other attributes of businesses partnered with Yelp is available \href{https://business.yelp.com/data/resources/open-dataset/}{here} on the official website of Yelp. From the dataset, we extracted all user review texts for analyzing semantic variation in a business domain.
+
+\subsubsection{Ciao}
+
+Ciao is an online review site, similar to Yelp, but focused on product reviews rather than restaurant reviews. A public dataset containing reviews on Ciao during 2000-2011 is made available \href{https://www.cse.msu.edu/~tangjili/trust.html}{here} on the website of a professor at Michigan State University. One characteristic of this Ciao dataset is that the reviews are relatively long compared to other corpora used in this project: the mean length of the reviews is 778 tokens and the maximum length is 14k tokens.
+
+\subsubsection{Reddit}
+
+Lastly, Reddit is an online forum where people discuss various topics, classified under different communities called ``subreddits''. Datasets containing a large amount of Reddit posts and comments during 2005-2025 are available \href{https://academictorrents.com/}{here} on the site of Academic Torrents, with a general dataset available \href{https://academictorrents.com/details/ba051999301b109eab37d16f027b3f49ade2de13}{here}. Since the datasets are very large, we did not filter the data by subreddits like what we did for arXiv, and instead we pulled all the Reddit posts and excluded the comments.
+
+\textit{Table \ref{tab:corpora}} shows an overview of the sizes of the corpora described above, with arXiv being the smallest and Reddit being substantially larger. This table suggests severe data imbalance in our datasets that may hinder performance and a fair comparison between models in our results. Additionally, since we are examining synchronic semantic variation, the datasets must be gathered from the same time period so that the comparison is meaningful. However, the Ciao dataset is only available during 2000-2011, while the majority of arXiv papers are from 2010 onwards. Therefore, we had to make the compromise to restrict all 4 datasets to 2010-2011 and we acknowledge this as a data limitation.
+
+\begin{table}[t]
+    \centering
+    \begin{tabular}{llr}
+        \toprule
+        Corpus & Domain & Documents \\
+        \midrule
+        arXiv CS & Academic (CS) & 16,711 \\
+        Yelp     & Restaurant reviews & 369,400 \\
+        Ciao     & Product reviews & 48,018 \\
+        Reddit   & Online communities & 16M \\
+        \bottomrule
+    \end{tabular}
+    \caption{Corpora used for cross-group comparison}
+    \label{tab:corpora}
+\end{table}
+
+\subsection{Embedding Algorithms}
+
+In this paper, we employed 3 methods to train word embeddings: word2vec, positive pointwise mutual information (PPMI), and singular value decomposition (SVD). For each corpus, all 3 embedding methods were applied, leading to 3 different embedding spaces in which we calculated cosine distances to measure semantic variation. This design allowed us to more confidently identify semantic variation when multiple methods agreed. This section briefly discusses the theories behind each of the embedding algorithms.
+
+\subsubsection{word2vec}
+
+word2vec is a classical word embedding training mechanism introduced by \citet{mikolov2013efficientestimationwordrepresentations}. There are two training methods for word2vec: continuous bag of words (CBOW) and skip-gram with negative sampling (SGNS). We used SGNS in this project, where given a target word \( w_i \), the model was asked to predict the context words \( c_j \) surrounding \( w_i \). The training maximized the probability of true context words while minimizing those of sampled ``negative'' words unlikely to appear in the context of the target word. At the end, each word \( w_i \) is represented by a word vector \( \mathbf{w}_i^{\text{SGNS}} \) and a context vector \( \mathbf{c}_j^{\text{SGNS}} \) that satisfy
+\[ \mathbb{P}(c_j|w_i) \propto \exp(\mathbf{w}_i^{\text{SGNS}} \cdot \mathbf{c}_j^{\text{SGNS}}). \]
+In this project, we used a context window size of 4, following \citet{hamilton2016diachronic}.
+
+\subsubsection{PPMI}
+
+PPMI is a count-based method \cite{levy-etal-2015-improving}. Given word \( w_i \) and a fixed context window size, we compute the positive pointwise mutual information of \( w_i \) with the set of context words \( c_j \) appearing within the context window size using the following formula:
+\[ \mathbf{M}_{i, j}^{\text{PPMI}} = \max\left\{ \log{\frac{\mathbb{P}(w_i, c_j)}{\mathbb{P}(w_i)\mathbb{P}(c_j)}} - \alpha, 0 \right\}, \]
+where \( \alpha > 0 \) is a shift parameter \cite{hamilton2016diachronic}. In this study, we used a context window size of 4 and \( \alpha = \log 5 \), following \citet{hamilton2016diachronic}. Generally, the PPMI matrix is a sparse matrix because only certain words in the vocabulary co-occur with the target word \( w_i \), and this might lead to problems in computing cosine distances. More on this will be discussed in \textit{Section \ref{sec:results}} and \textit{Section \ref{sec:limitations}}.
+
+\subsubsection{SVD}
+
+SVD is a technique in linear algebra that decomposes a matrix into 3 components, mathematically expressed as
+\[ \mathbf{M} = \mathbf{U}\mathbf{\Sigma}\mathbf{V}^{\top}. \]
+In the equation, the columns of matrix \( \mathbf{U} \) are orthonormal vectors representing the principal directions of the space, and each row of \( \mathbf{U} \) corresponds to a word. Matrix \( \mathbf{\Sigma} \) is a diagonal matrix where each value on the diagonal represents the importance of the corresponding principal direction. To train word embeddings using SVD, we applied SVD on the PPMI matrix described in the previous section (however, with \( \alpha = 0 \) following \citet{hamilton2016diachronic}) and obtained the embedding for word \( w_i \) as
+\[ \mathbf{w}_i^{\text{SVD}} = (\mathbf{U}\mathbf{\Sigma}^{\gamma})_i, \]
+where \( \gamma \) is a weighting parameter. We discarded \( \mathbf{V}^{\top} \) and used only \( \mathbf{U} \) and \( \mathbf{\Sigma} \) to form the embeddings. We used \( \gamma = 0.5 \) for the SVD training \cite{hamilton2016diachronic}.
+
+\subsection{Experimental Design}
+
+With the selected datasets and embedding algorithms, we started the experiments with training the embeddings using each embedding algorithm on each corpus, resulting in 12 embedding models. However, the embedding algorithms described above have a known problem, primarily associated with word2vec and SVD. Particularly, depending on the model initialization, we might obtain word2vec embeddings with different orientations in the embedding space. The singular value decomposition of a matrix is also not unique if a singular value has a multiplicity greater than 1. Therefore, to make the embeddings comparable across corpora, we had to use the Procrustes alignment algorithm to align the word2vec and SVD embeddings of different corpora. Following \citet{hamilton2016diachronic}, let \( \mathbf{W}_i \), \( \mathbf{W}_j \) be the embedding matrices for corpora \( i \) and \( j \). We first L2-normalize the two embedding matrices to get \( \mathbf{W}_i^{\text{norm}} \) and \( \mathbf{W}_j^{\text{norm}} \), so that all word vectors have unit length. Then, we found the best rotational matrix by optimizing
+\[ \mathbf{R} = \arg \min_{\mathbf{Q}^\top \mathbf{Q} = \mathbf{I}} ||\mathbf{W}_i^{\text{norm}} \mathbf{Q} - \mathbf{W}_j^{\text{norm}}||_F. \]
+Note that PPMI does not need alignment because it is fully count-based. After the Procrustes transformation, we could then meaningfully compare vectors trained on different corpora of the same words by computing the cosine distance between them as
+\[ \operatorname{cos-dist}(\mathbf{w}_i, \mathbf{w}_j) = 1 - \frac{\mathbf{w}_i \cdot \mathbf{w}_j}{||\mathbf{w}_i||_2 ||\mathbf{w}_j||_2}. \]
+With the cosine distances computed for each embedding method between each pair of corpora, we examined the Spearman correlation between cosine distances computed from different embedding methods. The significance is that, if the correlation is positive and strong, then we have strong evidence that these embedding algorithms collectively detect meaningful semantic variation across these social groups. On the other hand, if the correlation is weak or negative, then there might be different signals that these algorithms are detecting.
+
+The code for this project is available at \url{https://github.com/BullDF/synchronic-semantic-variation}.
+
+Lastly, we employed an iterative algorithm called \texttt{ConShift} to find anchor words from the computed cosine distances \cite{arrington2025conshift}. This algorithm finds both a set of stable words and a set of words that it determines to have shifted in meaning, which allows us to conduct qualitative analysis of semantic variation. More on this algorithm is described in the next section.
+
+\section{Results \& Discussion} \label{sec:results}
+
+\subsection{Spearman Correlation}
+
+\begin{table}[t]
+    \centering
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{lrrr}
+        \toprule
+        Pair & w2v vs PPMI & w2v vs SVD & PPMI vs SVD \\
+        \midrule
+        arXiv vs Yelp   & \(-0.07\) & \(-0.02\) & \(0.44\) \\
+        arXiv vs Ciao   & \(-0.03\) & \(0.04\)  & \(0.51\) \\
+        arXiv vs Reddit & \(\mathbf{0.29}\)  & \(\mathbf{0.50}\)  & \(0.50\) \\
+        Yelp vs Ciao    & \(-0.15\) & \(-0.23\) & \(\mathbf{0.61}\) \\
+        Yelp vs Reddit  & \(0.11\)  & \(0.08\)  & \(0.60\) \\
+        Ciao vs Reddit  & \(0.14\)  & \(-0.02\) & \(0.54\) \\
+        \bottomrule
+    \end{tabular}}
+    \caption{Spearman \( \rho \) on common vocabulary per pair}
+    \label{tab:spearman}
+\end{table}
+
+\textit{Table \ref{tab:spearman}} shows the Spearman correlations between each pair of the embedding algorithms on each pair of corpora. From the rightmost column of the table, we see that the Spearman correlations for PPMI and SVD are all positive and moderately strong. This outcome is expected, as SVD is derived from PPMI as mentioned above and so it is highly probable that they capture similar signals. It is also worth mentioning that the pair of arXiv and Reddit achieved the highest Spearman correlations on both the word2vec and PPMI pair and the word2vec and SVD pair. We attribute this to arXiv and Reddit falling under similar domains, as the Reddit dataset used in this study contains computer science related subreddits. Other than these, the Spearman correlations for other pairs of corpora are near 0, indicating that the embedding methods were capturing different information on these datasets, and thus any conclusion of semantic variation in these pairs of corpora should be taken with caution.
+
+One explanation for the near-zero Spearman correlations involving PPMI might be related to the sparse nature of the PPMI embedding matrix. Looking at the PPMI formula presented previously, the PPMI matrix is mostly count-based, where the embeddings are computed based on co-occurrences of words. In this sense, if the context words appearing near a target word are drastically different in different corpora, then the dot product of these vectors would be near 0, leading to cosine distances of near 1 for most words in the vocabulary. To quantify this, \textit{Table \ref{tab:ppmi_collapse}} reports the percentage of words with PPMI cosine distance in $[0.95, 1.05]$ for each pair, indicating how many words have cosine distances clustered near 1. Notably, the highest percentage of 70.6\% occurs between arXiv and Yelp, and even the lowest percentage is 33.9\% between Ciao and Reddit, despite having the largest common vocabulary. These numbers suggest that PPMI embeddings are unreliable for analyzing synchronic semantic variation across distant domains. More on this will be mentioned in \textit{Section \ref{sec:limitations}}.
+
+\begin{table}[t]
+    \centering
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{lrr}
+        \toprule
+        Pair & \% dist $\in [0.95, 1.05]$ & Vocab size \\
+        \midrule
+        arXiv vs Yelp   & 70.6\% & 8,810 \\
+        arXiv vs Ciao   & 64.6\% & 9,540 \\
+        arXiv vs Reddit & 44.7\% & 12,640 \\
+        Yelp vs Ciao    & 47.5\% & 33,854 \\
+        Yelp vs Reddit  & 41.0\% & 48,508 \\
+        Ciao vs Reddit  & 33.9\% & 55,164 \\
+        \bottomrule
+    \end{tabular}}
+    \caption{Percentage of words with PPMI cosine distance $\in [0.95, 1.05]$}
+    \label{tab:ppmi_collapse}
+\end{table} 
+
+\subsection{\texttt{ConShift}}
+
+\section{Conclusion}
+
+\subsection{Summary}
+
+To summarize, this paper aimed to apply methods for detecting diachronic semantic variation to a synchronic setting and find semantic variation there. We adapted the procedure carried out by \citet{hamilton2016diachronic} and applied it to the corpora used by \citet{hofmann2021dcwe} consisting of arXiv CS paper abstracts, Ciao, Yelp, and Reddit during the 2010-2011 period. Our results showed that cosine distances computed using PPMI and SVD were highly correlated, which is expected as SVD is based on the embedding matrix computed using PPMI. The correlations between word2vec and other methods were minimal on most pairs of corpora besides arXiv and Reddit, suggesting that word2vec, as a neural model, captures different semantic variation signals than count-based methods such as PPMI and SVD. We further noted that the PPMI embedding method has a significant limitation that collapses a large portion of cosine distances to 1 for distant domains, as shown in \textit{Table \ref{tab:ppmi_collapse}}. Lastly, we conducted qualitative analysis via the \texttt{ConShift} algorithm to find anchor words and words that had undergone semantic variation between corpora \cite{arrington2025conshift}. From the results, we found words such as \textit{difficult}, \textit{larger}, and \textit{issues} that have relatively stable meanings across corpora, while words including \textit{excited} and \textit{valued} demonstrated successful semantic variation detection, demonstrating the usefulness of our embedding methods and justifying our experimental procedure.
+
+\subsection{Limitations \& Future Work} \label{sec:limitations}
+
+As mentioned above, PPMI poses a significant limitation in our analysis. The reason that it worked in the diachronic setting of \citet{hamilton2016diachronic} is that time is a continuous dimension. Since semantic shift along the time axis is gradual, the possible context words around a target word are also gradually changing and thus we would not encounter similar cases as in our study, where the context words for different corpora are drastically different. Considering this, future researchers studying PPMI in a synchronic setting can consider including corpora that are more granular, such as similar subreddits. This is because the corpora in our study are too distinct from each other, and by including more granular social groups, one could exploit the ``continuous'' nature of social groups to attempt to make PPMI more useful.
+
+Another issue with the current study is the difficulty of distinguishing semantic variation from polysemy. For example, the word \textit{transformer} has completely different meanings in a movie context versus a computer science context due to polysemy, but our methods would classify it as semantic variation since this word would have different embedding vectors in different corpora. To address this, future studies might consider using more sophisticated embedding methods such as BERT so that the models can be aware of the context in order to make a decision.
+
+\section{Acknowledgements}
+
+We are extremely grateful to Professor Yang Xu and TA Kieran Henderson for giving valuable feedback and conceptual guidance in computational semantic change throughout the process of this research.
+
+\bibliography{ref}
+
+\end{document}
